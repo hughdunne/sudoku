@@ -102,10 +102,24 @@ def test_box():
 
 
 def test_fill_blank_cells():
+    def cell_ok(cell_val):
+        return isinstance(cell_val, int) or len(cell_val) > 0
+
+    def row_ok(row):
+        return all(map(cell_ok, row))
+
+    def grid_ok(grid):
+        return all(map(row_ok, grid))
+
     s = Sudoku(TESTSTR1)
-    assert all(map(lambda x: isinstance(x, int) or len(x) > 0, s.grid))
+    assert not grid_ok(s.grid)
+    s.fill_blank_cells()
+    assert grid_ok(s.grid)
+
     s = Sudoku(TESTSTR2)
-    assert all(map(lambda x: isinstance(x, int) or len(x) > 0, s.grid))
+    assert not grid_ok(s.grid)
+    s.fill_blank_cells()
+    assert grid_ok(s.grid)
 
     with pytest.raises(ValueError) as e:
         s = Sudoku('1,2,3,4,5,6,7,,9,,,,,,,,8,' + 63 * ',')
