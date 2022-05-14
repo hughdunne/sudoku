@@ -26,7 +26,11 @@ Now try out various rules, e.g:
 
     s.find_hidden_singles()
 
-Use the "kitchen sink" method to try all known rules. It starts with simple rules, and if they don't help, it tries more
+Use the "kitchen sink" method to try all known rules.
+
+    s.kitchen_sink()
+
+This methid starts with simple rules, and if they don't help, it tries more
 advanced rules, reverting back to the simplest rule when progress is made. If all else fails, it uses brute force.
 
     s.bruteforce()
@@ -52,3 +56,11 @@ The complete list of rules is:
 * xy_wing
 * xyz_wing
 * bruteforce
+
+Each method will print out debugging information on cells solved or candidates eliminated. For example:
+
+    BLR: digit 7 in row E only occurs in box 4
+
+When the puzzle is solved, you will see the output:
+
+    Puzzle solved!
