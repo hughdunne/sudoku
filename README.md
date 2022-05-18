@@ -30,8 +30,8 @@ Use the "kitchen sink" method to try all known rules.
 
     s.kitchen_sink()
 
-This methid starts with simple rules, and if they don't help, it tries more
-advanced rules, reverting back to the simplest rule when progress is made. If all else fails, it uses brute force.
+This method starts with simple rules, and if they don't help, it tries more
+advanced rules, reverting to the simplest rule when progress is made. If all else fails, it uses brute force.
 
     s.bruteforce()
 
@@ -63,3 +63,20 @@ Each method will print out debugging information on cells solved or candidates e
 When the puzzle is solved, you will see the output:
 
     Puzzle solved!
+
+## Developer Notes
+
+The board is represented by the `grid` attribute, which is a 9-element list (one for each row: 0 -> Row A,
+1 -> Row B etc.) of 9-element lists (one for each cell in the row). A cell value is either an  integer if
+the cell has been solved, or a set of integers representing the possible candidates for that cell.
+
+To add a logical rule to the above list, it must obey the following convention:
+
+* It takes no arguments apart from the implicit `self` argument.
+* It does not solve any cells, i.e. replace a set with an integer as a cell value. This should only happen
+  in the method `fill_naked_singles` to ensure that `bruteforce` and `kitchen_sink` work correctly.
+* It must be decorated with `@solver(N)` where `N` is an integer representing the rank of the rule.
+  A rule with a higher rank is considered more advanced. The `kitchen_sink` method tries rules in increasing
+  rank order. The `bruteforce` rule must always have the highest rank so that it is tried last in `kitchen_sink`
+  when all other rules have failed to make progress.
+* It must call `fill_naked_singles` as the last step before exiting.
