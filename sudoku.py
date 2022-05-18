@@ -248,7 +248,8 @@ class Sudoku:
                     continue
                 all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), tup))
                 if hidden and all_present and len(present) == tuple_len:
-                    logging.debug("Hidden {0} {1} in {2}".format(tuple_name, tup, blockname(bb)))
+                    logging.debug("Hidden {0} {1} in {2}: {3}".format(
+                        tuple_name, tup, blockname(bb), [*map(lambda tt: cellname(tt[0], tt[1]), present)]))
                     for ii, jj, cell_val in present:
                         self.grid[ii][jj] = cell_val.intersection(tup)
         self.fill_naked_singles()
@@ -349,28 +350,36 @@ class Sudoku:
                         logging.debug("Found quad: {0} in {1}".format(key, blockname(bb)))
         self.fill_naked_singles()
 
-    def find_hidden_pairs(self):
-        tuple_len = 2
-        for p in all_pairs(1):
-            for bb, block in enumerate(self.all_blocks()):
-                occurrences = [[] for _ in p]
-                for idx, d in enumerate(p):
+    def find_naked_tuples(self, tuple_len, tuple_gen, tuple_name):
+        for bb, block in enumerate(self.all_blocks()):
+            reduced = False
+            c = Counter()
+            unsolved = 0
+            for ii, jj, cell_val in block:
+                if isinstance(cell_val, set):
+                    unsolved += 1
+                    c[tuple(cell_val)] += 1
+            if unsolved <= tuple_len:
+                continue
+            cc = Counter()
+            for t in tuple_gen:
+                for k, v in c.items():
+                    if set(k).issubset(t):
+                        cc[tuple(t)] += v
+            for key, nr_occurrences in cc.items():
+                if nr_occurrences == tuple_len:
                     for ii, jj, cell_val in block:
-                        if isinstance(cell_val, set) and d in cell_val:
-                            occurrences[idx].append((ii, jj))
-                if all(map(lambda x: len(x) == tuple_len, occurrences)) and \
-                        len(set([tuple(t) for t in occurrences])) == 1:
-                    occurrences = occurrences[0]
-                    reduced = False
-                    for ii, jj in occurrences:
-                        if len(self.grid[ii][jj]) > tuple_len:
-                            reduced = True
-                            self.grid[ii][jj] = set(p)
+                        if isinstance(cell_val, set):
+                            ks = set(key)
+                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
+                                self.grid[ii][jj].difference_update(ks)
+                                reduced = True
                     if reduced:
-                        logging.debug("Hidden pair {0} in {1}: {2}".format(
-                            p, blockname(bb),
-                            [*map(lambda tt: cellname(*tt), occurrences)]))
+                        logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
         self.fill_naked_singles()
+
+    def find_hidden_pairs(self):
+        self.find_hidden_tuples(2, all_pairs(1), "pair")
 
     def find_hidden_triples(self):
         self.find_hidden_tuples(3, all_triples(1), "triple")
@@ -421,6 +430,7 @@ class Sudoku:
                                        " in box {2}").format(d, jj + 1, box_no + 1))
 
         self.fill_naked_singles()
+    blr.rank = 10
 
     def pointing(self):
         for d in ALL_DIGITS:
