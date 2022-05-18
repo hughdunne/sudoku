@@ -103,7 +103,7 @@ def test_box():
 
 def test_fill_blank_cells():
     def cell_ok(cell_val):
-        return isinstance(cell_val, int) or len(cell_val) > 0
+        return isinstance(cell_val, int) or (isinstance(cell_val, set) and len(cell_val) > 0)
 
     def row_ok(row):
         return all(map(cell_ok, row))
@@ -150,12 +150,17 @@ def test_fill_naked_singles():
 
 
 def test_find_hidden_singles():
-    # 4036
     s = Sudoku(TESTSTR4)
     s.fill_blank_cells()
     s.fill_naked_singles()
     s.find_hidden_singles()
     assert s.save() == TESTSTR5
+
+    s = Sudoku(BACKTRACK)
+    s.fill_blank_cells()
+    while not s.solved():
+        s.find_hidden_singles()
+    assert s.save() == BACKTRACK_A
 
 
 def test_pointing():
@@ -384,6 +389,18 @@ def test_bruteforce():
     s = Sudoku(TESTSTR8136)
     s.bruteforce()
     assert s.save() == TESTSTR8136A
+    s = Sudoku(BACKTRACK_B)
+    s.fill_blank_cells()
+    s.bruteforce()
+    assert s.save() == BACKTRACK_C
+
+
+@pytest.mark.slow
+def test_bruteforce_slow():
+    s = Sudoku(BACKTRACK)
+    s.fill_blank_cells()
+    s.bruteforce()
+    assert s.save() == BACKTRACK_A
 
 
 def test_solved():
@@ -426,3 +443,6 @@ def test_getitem():
     with pytest.raises(ValueError) as e:
         s['a10']  # noqa
     assert str(e.value) == "Invalid index a10"
+    with pytest.raises(ValueError) as e:
+        s['D0']  # noqa
+    assert str(e.value) == "Invalid index D0"

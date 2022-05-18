@@ -69,7 +69,6 @@ def in_box(idx):
     return [*range(box_start, box_end)]
 
 
-
 def outside_box(idx):
     # For a given row or column, return all row or column numbers in a different box.
     box_start = BOXSIZE * (idx // BOXSIZE)
@@ -147,7 +146,7 @@ class Sudoku:
                 if row <= 'I':
                     row = ascii_uppercase.index(row)
                     col = int(item[1]) - 1
-                    if col < GRIDSIZE:
+                    if 0 <= col < GRIDSIZE:
                         return self.grid[row][col]
         elif isinstance(item, int) and item in ALL_DIGITS:
             return [self.grid[ii][item - 1] for ii in range(GRIDSIZE)]
@@ -365,7 +364,7 @@ class Sudoku:
                                 # At least one cell must not be a subset of trp,
                                 # to avoid marking naked triple as hidden.
                                 hidden = True
-                if unsolved <= 3:
+                if unsolved <= tuple_len:
                     continue
                 all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), trp))
                 if hidden and all_present and len(present) == tuple_len:
@@ -390,7 +389,7 @@ class Sudoku:
                                 # At least one cell must not be a subset of quad,
                                 # to avoid marking naked quad as hidden.
                                 hidden = True
-                if unsolved <= 4:
+                if unsolved <= tuple_len:
                     continue
                 all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), quad))
                 if hidden and all_present and len(present) == tuple_len:
@@ -786,21 +785,25 @@ class Sudoku:
         self.fill_naked_singles()
 
     def bruteforce(self):
-        # Operates recursively using a stack, so we can roll back changes.
-        for ii, jj, cell_val in all_cells(self.grid):
-            if isinstance(cell_val, set):
-                d = self.grid[ii][jj].pop()
-                self.push()
-                self.grid[ii][jj] = {d}
-                try:
-                    self.fill_naked_singles()
-                except ValueError:
-                    # Roll back. Wrong digit has already been popped off so try the next digit.
-                    while True:
-                        self.pop()
-                        if self.valid():
-                            break
-                self.bruteforce()
+        # Operates using a stack, so we can roll back changes.
+        while True:
+            finished = True
+            for ii, jj, cell_val in all_cells(self.grid):
+                if isinstance(cell_val, set):
+                    finished = False
+                    d = self.grid[ii][jj].pop()
+                    self.push()
+                    self.grid[ii][jj] = {d}
+                    try:
+                        self.fill_naked_singles()
+                    except ValueError:
+                        # Roll back. Wrong digit has already been popped off so try the next digit.
+                        while True:
+                            self.pop()
+                            if self.valid():
+                                break
+                    break
+            if finished:
                 break
 
     def kitchen_sink(self):
