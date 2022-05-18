@@ -229,6 +229,30 @@ class Sudoku:
         for box_no in range(GRIDSIZE):
             yield self.box(box_no)
 
+    def find_hidden_tuples(self, tuple_len, tuple_gen, tuple_name):
+        for tup in tuple_gen:
+            for bb, block in enumerate(self.all_blocks()):
+                unsolved = 0
+                present = []
+                hidden = False
+                for ii, jj, cell_val in block:
+                    if isinstance(cell_val, set):
+                        unsolved += 1
+                        if not tup.isdisjoint(cell_val):
+                            present.append((ii, jj, cell_val))
+                            if not cell_val.issubset(tup):
+                                # At least one cell must not be a subset of tup,
+                                # to avoid marking naked tuple as hidden.
+                                hidden = True
+                if unsolved <= tuple_len:
+                    continue
+                all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), tup))
+                if hidden and all_present and len(present) == tuple_len:
+                    logging.debug("Hidden {0} {1} in {2}".format(tuple_name, tup, blockname(bb)))
+                    for ii, jj, cell_val in present:
+                        self.grid[ii][jj] = cell_val.intersection(tup)
+        self.fill_naked_singles()
+
     #
     # Solvers
     #
@@ -349,54 +373,10 @@ class Sudoku:
         self.fill_naked_singles()
 
     def find_hidden_triples(self):
-        tuple_len = 3
-        for trp in all_triples(1):
-            for bb, block in enumerate(self.all_blocks()):
-                unsolved = 0
-                present = []
-                hidden = False
-                for ii, jj, cell_val in block:
-                    if isinstance(cell_val, set):
-                        unsolved += 1
-                        if not trp.isdisjoint(cell_val):
-                            present.append((ii, jj, cell_val))
-                            if not cell_val.issubset(trp):
-                                # At least one cell must not be a subset of trp,
-                                # to avoid marking naked triple as hidden.
-                                hidden = True
-                if unsolved <= tuple_len:
-                    continue
-                all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), trp))
-                if hidden and all_present and len(present) == tuple_len:
-                    logging.debug("Hidden triple {0} in {1}".format(trp, blockname(bb)))
-                    for ii, jj, cell_val in present:
-                        self.grid[ii][jj] = cell_val.intersection(trp)
-        self.fill_naked_singles()
+        self.find_hidden_tuples(3, all_triples(1), "triple")
 
     def find_hidden_quads(self):
-        tuple_len = 4
-        for quad in all_quads(1):
-            for bb, block in enumerate(self.all_blocks()):
-                unsolved = 0
-                present = []
-                hidden = False
-                for ii, jj, cell_val in block:
-                    if isinstance(cell_val, set):
-                        unsolved += 1
-                        if not quad.isdisjoint(cell_val):
-                            present.append((ii, jj, cell_val))
-                            if not cell_val.issubset(quad):
-                                # At least one cell must not be a subset of quad,
-                                # to avoid marking naked quad as hidden.
-                                hidden = True
-                if unsolved <= tuple_len:
-                    continue
-                all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), quad))
-                if hidden and all_present and len(present) == tuple_len:
-                    logging.debug("Hidden quad {0} in {1}".format(quad, blockname(bb)))
-                    for ii, jj, cell_val in present:
-                        self.grid[ii][jj] = cell_val.intersection(quad)
-        self.fill_naked_singles()
+        self.find_hidden_tuples(4, all_quads(1), "quad")
 
     def blr(self):
         for d in ALL_DIGITS:
