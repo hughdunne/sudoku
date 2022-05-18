@@ -822,8 +822,8 @@ class Sudoku:
     def kitchen_sink(self):
         # Try simple rules, then more advanced ones, then brute force.
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        solvers = [{'name': x, 'func': y, 'rank': y.rank} for x, y in methods if hasattr(y, 'rank')]
-        solvers.sort(key=lambda k: k['rank'])
+        solvers = [{'name': x, 'func': y} for x, y in methods if hasattr(y, 'rank')]
+        solvers.sort(key=lambda k: k['func'].rank)
         idx = 0
         self.fill_blank_cells()
         while not self.solved():
