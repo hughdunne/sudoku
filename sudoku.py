@@ -430,7 +430,6 @@ class Sudoku:
                                        " in box {2}").format(d, jj + 1, box_no + 1))
 
         self.fill_naked_singles()
-    blr.rank = 10
 
     def pointing(self):
         for d in ALL_DIGITS:
