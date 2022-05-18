@@ -72,9 +72,10 @@ the cell has been solved, or a set of integers representing the possible candida
 
 To add a logical rule to the above list, it must obey the following convention:
 
-* It takes no arguments apart from the implicit `self` argument.
-* It does not solve any cells, i.e. replace a set with an integer as a cell value. This should only happen
+* It should take no arguments apart from the implicit `self` argument.
+* It should not solve any cells, i.e. replace a set with an integer as a cell value. This should only happen
   in the method `fill_naked_singles` to ensure that `bruteforce` and `kitchen_sink` work correctly.
+  Instead, it should eliminate candidates.
 * It must be decorated with `@solver(N)` where `N` is an integer representing the rank of the rule.
   A rule with a higher rank is considered more advanced. The `kitchen_sink` method tries rules in increasing
   rank order. The `bruteforce` rule must always have the highest rank so that it is tried last in `kitchen_sink`
