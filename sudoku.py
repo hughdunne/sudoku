@@ -237,34 +237,6 @@ class Sudoku:
         for box_no in range(GRIDSIZE):
             yield self.box(box_no)
 
-    def find_naked_tuples(self, tuple_len, tuple_gen, tuple_name):
-        for bb, block in enumerate(self.all_blocks()):
-            reduced = False
-            c = Counter()
-            unsolved = 0
-            for ii, jj, cell_val in block:
-                if isinstance(cell_val, set):
-                    unsolved += 1
-                    c[tuple(cell_val)] += 1
-            if unsolved <= tuple_len:
-                continue
-            cc = Counter()
-            for t in tuple_gen:
-                for k, v in c.items():
-                    if set(k).issubset(t):
-                        cc[tuple(t)] += v
-            for key, nr_occurrences in cc.items():
-                if nr_occurrences == tuple_len:
-                    for ii, jj, cell_val in block:
-                        if isinstance(cell_val, set):
-                            ks = set(key)
-                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
-                                self.grid[ii][jj].difference_update(ks)
-                                reduced = True
-                    if reduced:
-                        logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
-        self.fill_naked_singles()
-
     def find_hidden_tuples(self, tuple_len, tuple_gen, tuple_name):
         for tup in tuple_gen:
             for bb, block in enumerate(self.all_blocks()):
