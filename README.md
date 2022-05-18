@@ -35,8 +35,7 @@ advanced rules, reverting back to the simplest rule when progress is made. If al
 
     s.bruteforce()
 
-This method tries all possible solutions, rolling back if an error is encountered. It is recursive, so it may cause stack
-overflow on a fiendishly designed puzzle.
+This method tries all possible solutions, rolling back if an error is encountered.
 
 The complete list of rules is:
 
