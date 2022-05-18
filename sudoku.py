@@ -91,9 +91,11 @@ def blockname(bb) -> str:
     return blocktype + ' ' + str(ii)
 
 
-def solver(func):
-    func.rank = 10
-    return func
+def solver(rank):
+    def inner(func):
+        func.rank = rank
+        return func
+    return inner
 
 
 class Sudoku:
@@ -235,6 +237,34 @@ class Sudoku:
         for box_no in range(GRIDSIZE):
             yield self.box(box_no)
 
+    def find_naked_tuples(self, tuple_len, tuple_gen, tuple_name):
+        for bb, block in enumerate(self.all_blocks()):
+            reduced = False
+            c = Counter()
+            unsolved = 0
+            for ii, jj, cell_val in block:
+                if isinstance(cell_val, set):
+                    unsolved += 1
+                    c[tuple(cell_val)] += 1
+            if unsolved <= tuple_len:
+                continue
+            cc = Counter()
+            for t in tuple_gen:
+                for k, v in c.items():
+                    if set(k).issubset(t):
+                        cc[tuple(t)] += v
+            for key, nr_occurrences in cc.items():
+                if nr_occurrences == tuple_len:
+                    for ii, jj, cell_val in block:
+                        if isinstance(cell_val, set):
+                            ks = set(key)
+                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
+                                self.grid[ii][jj].difference_update(ks)
+                                reduced = True
+                    if reduced:
+                        logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
+        self.fill_naked_singles()
+
     def find_hidden_tuples(self, tuple_len, tuple_gen, tuple_name):
         for tup in tuple_gen:
             for bb, block in enumerate(self.all_blocks()):
@@ -264,7 +294,7 @@ class Sudoku:
     # Solvers
     #
 
-    @solver
+    @solver(1)
     def find_hidden_singles(self):
         for d in ALL_DIGITS:
             for bb, block in enumerate(self.all_blocks()):
@@ -281,7 +311,7 @@ class Sudoku:
                     logging.debug("{0}: {1} -> {{{2}}}".format(blockname(bb), cellname(ii, jj), d))
         self.fill_naked_singles()
 
-    @solver
+    @solver(2)
     def find_naked_pairs(self):
         for bb, block in enumerate(self.all_blocks()):
             reduced = False
@@ -301,7 +331,7 @@ class Sudoku:
                         logging.debug("Found naked pair {0} in {1}".format(k, blockname(bb)))
         self.fill_naked_singles()
 
-    @solver
+    @solver(3)
     def find_naked_triples(self):
         for bb, block in enumerate(self.all_blocks()):
             reduced = False
@@ -330,7 +360,7 @@ class Sudoku:
                         logging.debug("Found triple: {0} in {1}".format(key, blockname(bb)))
         self.fill_naked_singles()
 
-    @solver
+    @solver(4)
     def find_naked_quads(self):
         for bb, block in enumerate(self.all_blocks()):
             reduced = False
@@ -360,48 +390,19 @@ class Sudoku:
                         logging.debug("Found quad: {0} in {1}".format(key, blockname(bb)))
         self.fill_naked_singles()
 
-    @solver
-    def find_naked_tuples(self, tuple_len, tuple_gen, tuple_name):
-        for bb, block in enumerate(self.all_blocks()):
-            reduced = False
-            c = Counter()
-            unsolved = 0
-            for ii, jj, cell_val in block:
-                if isinstance(cell_val, set):
-                    unsolved += 1
-                    c[tuple(cell_val)] += 1
-            if unsolved <= tuple_len:
-                continue
-            cc = Counter()
-            for t in tuple_gen:
-                for k, v in c.items():
-                    if set(k).issubset(t):
-                        cc[tuple(t)] += v
-            for key, nr_occurrences in cc.items():
-                if nr_occurrences == tuple_len:
-                    for ii, jj, cell_val in block:
-                        if isinstance(cell_val, set):
-                            ks = set(key)
-                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
-                                self.grid[ii][jj].difference_update(ks)
-                                reduced = True
-                    if reduced:
-                        logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
-        self.fill_naked_singles()
-
-    @solver
+    @solver(5)
     def find_hidden_pairs(self):
         self.find_hidden_tuples(2, all_pairs(1), "pair")
 
-    @solver
+    @solver(6)
     def find_hidden_triples(self):
         self.find_hidden_tuples(3, all_triples(1), "triple")
 
-    @solver
+    @solver(7)
     def find_hidden_quads(self):
         self.find_hidden_tuples(4, all_quads(1), "quad")
 
-    @solver
+    @solver(8)
     def blr(self):
         for d in ALL_DIGITS:
 
@@ -446,7 +447,7 @@ class Sudoku:
 
         self.fill_naked_singles()
 
-    @solver
+    @solver(9)
     def pointing(self):
         for d in ALL_DIGITS:
 
@@ -489,7 +490,7 @@ class Sudoku:
                             logging.debug(msg)
         self.fill_naked_singles()
 
-    @solver
+    @solver(10)
     def xwing(self):
         cands = [[[] for _ in range(GRIDSIZE)] for _ in range(GRIDSIZE + 1)]
         for d in ALL_DIGITS:
@@ -549,7 +550,7 @@ class Sudoku:
 
         self.fill_naked_singles()
 
-    @solver
+    @solver(11)
     def swordfish_jellyfish(self):
         cands = [{'h': [[] for _ in range(GRIDSIZE)], 'v': [[] for _ in range(GRIDSIZE)]}
                  for _ in range(GRIDSIZE + 1)]
@@ -619,7 +620,7 @@ class Sudoku:
 
         self.fill_naked_singles()
 
-    @solver
+    @solver(12)
     def lformation(self):
         for ii, row in enumerate(self.grid):
             for jj, cell_val in enumerate(row):
@@ -653,7 +654,7 @@ class Sudoku:
 
         self.fill_naked_singles()
 
-    @solver
+    @solver(13)
     def deadly_pattern(self):
         pairwise_rows = [(0, 1), (0, 2), (1, 2), (3, 4), (3, 5), (4, 5), (6, 7), (6, 8), (7, 8)]
         pairwise_cols = [(0, 3), (0, 6), (3, 6), (1, 4), (1, 7), (4, 7), (2, 5), (2, 8), (5, 8)]
@@ -699,7 +700,7 @@ class Sudoku:
                                     ))
         self.fill_naked_singles()
 
-    @solver
+    @solver(14)
     def xy_wing(self):
         for bb in range(GRIDSIZE):
             cells = self.box(bb)
@@ -755,7 +756,7 @@ class Sudoku:
                                                     logging.debug(msg)
         self.fill_naked_singles()
 
-    @solver
+    @solver(15)
     def xyz_wing(self):
         for bb in range(GRIDSIZE):
             cells = self.box(bb)
@@ -795,7 +796,7 @@ class Sudoku:
                                                             ))
         self.fill_naked_singles()
 
-    @solver
+    @solver(100)
     def bruteforce(self):
         # Operates using a stack, so we can roll back changes.
         while True:
