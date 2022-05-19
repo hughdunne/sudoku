@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 BOXSIZE = 3
 GRIDSIZE = BOXSIZE * BOXSIZE
 ALL_DIGITS = frozenset(range(1, GRIDSIZE + 1))
+TUPLE_NAMES = (None, "single", "pair", "triple", "quad")
 
 logging.basicConfig(level=logging.DEBUG, format='%(lineno)d: %(message)s')
 
@@ -237,7 +238,52 @@ class Sudoku:
         for box_no in range(GRIDSIZE):
             yield self.box(box_no)
 
-    def find_hidden_tuples(self, tuple_len: int, tuple_gen, tuple_name: str):
+    def find_naked_tuples(self, tuple_len: int):
+        def get_gen(tup_len):
+            if tup_len == 2:
+                return all_pairs(1)
+            elif tup_len == 3:
+                return all_triples(1)
+            else:
+                return all_quads(1)
+
+        tuple_name = TUPLE_NAMES[tuple_len]
+        for bb, block in enumerate(self.all_blocks()):
+            reduced = False
+            c = Counter()
+            unsolved = 0
+            for ii, jj, cell_val in block:
+                if isinstance(cell_val, set):
+                    unsolved += 1
+                    c[tuple(cell_val)] += 1
+            if unsolved <= tuple_len:
+                continue
+            cc = Counter()
+            for t in get_gen(tuple_len):
+                for k, v in c.items():
+                    if set(k).issubset(t):
+                        cc[tuple(t)] += v
+            for key, nr_occurrences in cc.items():
+                if nr_occurrences == tuple_len:
+                    for ii, jj, cell_val in block:
+                        if isinstance(cell_val, set):
+                            ks = set(key)
+                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
+                                self.grid[ii][jj].difference_update(ks)
+                                reduced = True
+                    if reduced:
+                        logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
+        self.fill_naked_singles()
+
+    def find_hidden_tuples(self, tuple_len: int):
+        if tuple_len == 2:
+            tuple_gen = all_pairs(1)
+        elif tuple_len == 3:
+            tuple_gen = all_triples(1)
+        else:  # Assume 4
+            tuple_gen = all_quads(1)
+        tuple_name = TUPLE_NAMES[tuple_len]
+
         for tup in tuple_gen:
             for bb, block in enumerate(self.all_blocks()):
                 unsolved = 0
@@ -285,94 +331,27 @@ class Sudoku:
 
     @solver(2)
     def find_naked_pairs(self):
-        for bb, block in enumerate(self.all_blocks()):
-            reduced = False
-            c = Counter()
-            for ii, jj, cell_val in block:
-                if isinstance(cell_val, set):
-                    c[tuple(cell_val)] += 1
-            for k, v in c.items():
-                kl = len(k)
-                if kl == 2 and v == kl:
-                    ks = set(k)
-                    for ii, jj, cell_val in block:
-                        if isinstance(cell_val, set) and cell_val != ks and not cell_val.isdisjoint(ks):
-                            self.grid[ii][jj].difference_update(ks)
-                            reduced = True
-                    if reduced:
-                        logging.debug("Found naked pair {0} in {1}".format(k, blockname(bb)))
-        self.fill_naked_singles()
+        self.find_naked_tuples(2)
 
     @solver(3)
     def find_naked_triples(self):
-        for bb, block in enumerate(self.all_blocks()):
-            reduced = False
-            c = Counter()
-            unsolved = 0
-            for ii, jj, cell_val in block:
-                if isinstance(cell_val, set):
-                    unsolved += 1
-                    c[tuple(cell_val)] += 1
-            if unsolved <= 3:
-                continue
-            cc = Counter()
-            for t in all_triples(1):
-                for k, v in c.items():
-                    if set(k).issubset(t):
-                        cc[tuple(t)] += v
-            for key, nr_occurrences in cc.items():
-                if nr_occurrences == 3:
-                    for ii, jj, cell_val in block:
-                        if isinstance(cell_val, set):
-                            ks = set(key)
-                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
-                                self.grid[ii][jj].difference_update(ks)
-                                reduced = True
-                    if reduced:
-                        logging.debug("Found triple: {0} in {1}".format(key, blockname(bb)))
-        self.fill_naked_singles()
+        self.find_naked_tuples(3)
 
     @solver(4)
     def find_naked_quads(self):
-        for bb, block in enumerate(self.all_blocks()):
-            reduced = False
-            c = Counter()
-            unsolved = 0
-            for ii, jj, cell_val in block:
-                if isinstance(cell_val, set):
-                    unsolved += 1
-                    c[tuple(cell_val)] += 1
-            if unsolved <= 4:
-                continue
-            cc = Counter()
-            for t in all_quads(1):
-                for k, v in c.items():
-                    if set(k).issubset(t):
-                        cc[tuple(t)] += v
-            for key, nr_occurrences in cc.items():
-                if nr_occurrences == 4:
-                    for ii, jj, cell_val in block:
-                        if isinstance(cell_val, set):
-                            ks = set(key)
-                            if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
-                                logging.debug("Remove {0} from {1}".format(ks, cellname(ii, jj)))
-                                self.grid[ii][jj].difference_update(ks)
-                                reduced = True
-                    if reduced:
-                        logging.debug("Found quad: {0} in {1}".format(key, blockname(bb)))
-        self.fill_naked_singles()
+        self.find_naked_tuples(4)
 
     @solver(5)
     def find_hidden_pairs(self):
-        self.find_hidden_tuples(2, all_pairs(1), "pair")
+        self.find_hidden_tuples(2)
 
     @solver(6)
     def find_hidden_triples(self):
-        self.find_hidden_tuples(3, all_triples(1), "triple")
+        self.find_hidden_tuples(3)
 
     @solver(7)
     def find_hidden_quads(self):
-        self.find_hidden_tuples(4, all_quads(1), "quad")
+        self.find_hidden_tuples(4)
 
     @solver(8)
     def blr(self):
