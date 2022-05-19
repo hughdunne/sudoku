@@ -244,7 +244,7 @@ class Sudoku:
                 return all_pairs(1)
             elif tup_len == 3:
                 return all_triples(1)
-            else:
+            else:  # Assume 4
                 return all_quads(1)
 
         tuple_name = TUPLE_NAMES[tuple_len]
@@ -607,8 +607,8 @@ class Sudoku:
 
     @solver(13)
     def deadly_pattern(self):
-        pairwise_rows = [(0, 1), (0, 2), (1, 2), (3, 4), (3, 5), (4, 5), (6, 7), (6, 8), (7, 8)]
-        pairwise_cols = [(0, 3), (0, 6), (3, 6), (1, 4), (1, 7), (4, 7), (2, 5), (2, 8), (5, 8)]
+        pairwise_rows = ((0, 1), (0, 2), (1, 2), (3, 4), (3, 5), (4, 5), (6, 7), (6, 8), (7, 8))
+        pairwise_cols = ((0, 3), (0, 6), (3, 6), (1, 4), (1, 7), (4, 7), (2, 5), (2, 8), (5, 8))
         for bb in range(GRIDSIZE):
             box = self.box(bb)
             for pair in pairwise_rows:
