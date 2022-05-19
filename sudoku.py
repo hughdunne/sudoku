@@ -16,7 +16,7 @@ def all_cells(grid):
             yield ii, jj, cell_val
 
 
-def all_pairs(base=0):
+def all_pairs(base: int = 0):
     # Use base = 0 to get all possible pairs of coordinates
     # Use base = 1 to get all possible pairs of candidates
     for ii in range(base, base + GRIDSIZE):
@@ -24,19 +24,19 @@ def all_pairs(base=0):
             yield {ii, jj}
 
 
-def all_triples(base=0):
+def all_triples(base: int = 0):
     for pp in all_pairs(base):
         for kk in range(max(pp) + 1, base + GRIDSIZE):
             yield pp.union({kk})
 
 
-def all_quads(base=0):
+def all_quads(base: int = 0):
     for tt in all_triples(base):
         for ll in range(max(tt) + 1, base + GRIDSIZE):
             yield tt.union({ll})
 
 
-def box_containing(ii, jj):
+def box_containing(ii: int, jj: int):
     # Return the set of coordinates
     retval = set()
     x_box = (ii // BOXSIZE) * BOXSIZE
@@ -47,12 +47,12 @@ def box_containing(ii, jj):
     return retval
 
 
-def box_no_containing(ii, jj) -> int:
+def box_no_containing(ii: int, jj: int) -> int:
     # Return the box number
     return BOXSIZE * (ii // BOXSIZE) + (jj // BOXSIZE)
 
 
-def seen_by(ii, jj):
+def seen_by(ii: int, jj: int):
     retval = set()
     for row in range(GRIDSIZE):
         retval.add((row, jj))
@@ -63,25 +63,25 @@ def seen_by(ii, jj):
     return retval
 
 
-def in_box(idx):
+def in_box(idx: int):
     # For a given row or column, return all row or column numbers in the same box.
     box_start = BOXSIZE * (idx // BOXSIZE)
     box_end = box_start + BOXSIZE
     return [*range(box_start, box_end)]
 
 
-def outside_box(idx):
+def outside_box(idx: int):
     # For a given row or column, return all row or column numbers in a different box.
     box_start = BOXSIZE * (idx // BOXSIZE)
     box_end = box_start + BOXSIZE
     return [*range(0, box_start), *range(box_end, GRIDSIZE)]
 
 
-def cellname(ii, jj) -> str:
+def cellname(ii: int, jj: int) -> str:
     return ascii_uppercase[ii] + str(jj + 1)
 
 
-def blockname(bb) -> str:
+def blockname(bb: int) -> str:
     blocktype = ["Row", "Col", "Box"][bb // GRIDSIZE]
     ii = bb % GRIDSIZE
     if blocktype == "Row":
@@ -91,7 +91,7 @@ def blockname(bb) -> str:
     return blocktype + ' ' + str(ii)
 
 
-def solver(rank):
+def solver(rank: int):
     def inner(func):
         func.rank = rank
         return func
@@ -99,7 +99,7 @@ def solver(rank):
 
 
 class Sudoku:
-    def __init__(self, initstr):
+    def __init__(self, initstr: str):
         self.grid = []
         self.stack = []
         self.load(initstr)
@@ -160,7 +160,7 @@ class Sudoku:
             return [self.grid[ii][item - 1] for ii in range(GRIDSIZE)]
         raise ValueError("Invalid index {0}".format(item))
 
-    def box(self, box_no):
+    def box(self, box_no: int):
         # Box 0: upper left, box 1: upper center etc.
         retval = []
         box_ii, box_jj = box_no // BOXSIZE, box_no % BOXSIZE
@@ -237,7 +237,7 @@ class Sudoku:
         for box_no in range(GRIDSIZE):
             yield self.box(box_no)
 
-    def find_hidden_tuples(self, tuple_len, tuple_gen, tuple_name):
+    def find_hidden_tuples(self, tuple_len: int, tuple_gen, tuple_name: str):
         for tup in tuple_gen:
             for bb, block in enumerate(self.all_blocks()):
                 unsolved = 0

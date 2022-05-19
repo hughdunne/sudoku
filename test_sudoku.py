@@ -102,13 +102,13 @@ def test_box():
 
 
 def test_fill_blank_cells():
-    def cell_ok(cell_val):
+    def cell_ok(cell_val) -> bool:
         return isinstance(cell_val, int) or (isinstance(cell_val, set) and len(cell_val) > 0)
 
-    def row_ok(row):
+    def row_ok(row) -> bool:
         return all(map(cell_ok, row))
 
-    def grid_ok(grid):
+    def grid_ok(grid) -> bool:
         return all(map(row_ok, grid))
 
     s = Sudoku(TESTSTR1)
