@@ -322,6 +322,7 @@ class Sudoku:
 
     @solver(1)
     def find_hidden_singles(self):
+        found = set()
         for d in ALL_DIGITS:
             for bb, block in enumerate(self.all_blocks()):
                 contained = set()
@@ -333,8 +334,11 @@ class Sudoku:
                         contained.add((ii, jj))
                 if len(contained) == 1:
                     ii, jj = max(contained)
-                    self.grid[ii][jj] = {d}
-                    logging.debug("{0}: {1} -> {{{2}}}".format(blockname(bb), cellname(ii, jj), d))
+                    t = (ii, jj)
+                    if t not in found:
+                        self.grid[ii][jj] = {d}
+                        logging.debug("{0}: {1} -> {{{2}}}".format(blockname(bb), cellname(ii, jj), d))
+                        found.add(t)
         self.fill_naked_singles()
 
     @solver(2)
