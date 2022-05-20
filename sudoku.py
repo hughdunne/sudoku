@@ -463,11 +463,11 @@ class Sudoku:
                     cands[d]['h'][ii].append(jj)
                     cands[d]['v'][jj].append(ii)
             # Invert the list into a dict
-            occurrences = defaultdict(list)
+            h_occurrences = defaultdict(list)
             for ii, val in enumerate(cands[d]['h']):
                 kt = tuple(val)
-                occurrences[kt].append(ii)
-            for key, val in occurrences.items():
+                h_occurrences[kt].append(ii)
+            for key, val in h_occurrences.items():
                 if len(key) == 2 and len(val) == 2:
                     msgs = []
                     for ii in range(GRIDSIZE):
@@ -487,6 +487,12 @@ class Sudoku:
                         for msg in msgs:
                             logging.debug(msg)
 
+            v_occurrences = defaultdict(list)
+            for ii, val in enumerate(cands[d]['v']):
+                kt = tuple(val)
+                v_occurrences[kt].append(ii)
+            for key, val in v_occurrences.items():
+                if len(key) == 2 and len(val) == 2:
                     msgs = []
                     for jj in range(GRIDSIZE):
                         if jj != val[0] and jj != val[1]:
