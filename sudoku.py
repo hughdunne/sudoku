@@ -249,7 +249,7 @@ class Sudoku:
 
         tuple_name = TUPLE_NAMES[tuple_len]
         for bb, block in enumerate(self.all_blocks()):
-            reduced = False
+            msgs = []
             c = Counter()
             unsolved = 0
             for ii, jj, cell_val in block:
@@ -270,9 +270,12 @@ class Sudoku:
                             ks = set(key)
                             if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
                                 self.grid[ii][jj].difference_update(ks)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(ks, cellname(ii, jj)))
+                    if len(msgs) > 0:
                         logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
+                        for msg in msgs:
+                            logging.debug(msg)
+
         self.fill_naked_singles()
 
     def find_hidden_tuples(self, tuple_len: int):
@@ -286,6 +289,7 @@ class Sudoku:
 
         for tup in tuple_gen:
             for bb, block in enumerate(self.all_blocks()):
+                msgs = []
                 unsolved = 0
                 present = []
                 hidden = False
@@ -302,10 +306,14 @@ class Sudoku:
                     continue
                 all_present = all(map(lambda y: any(map(lambda x: y in x[2], present)), tup))
                 if hidden and all_present and len(present) == tuple_len:
-                    logging.debug("Hidden {0} {1} in {2}: {3}".format(
-                        tuple_name, tup, blockname(bb), [*map(lambda tt: cellname(tt[0], tt[1]), present)]))
                     for ii, jj, cell_val in present:
                         self.grid[ii][jj] = cell_val.intersection(tup)
+                        msgs.append("Remove {0} from {1}".format(tup, cellname(ii, jj)))
+                    if len(msgs) > 0:
+                        logging.debug("Hidden {0} {1} in {2}: {3}".format(
+                            tuple_name, tup, blockname(bb), [*map(lambda tt: cellname(tt[0], tt[1]), present)]))
+                        for msg in msgs:
+                            logging.debug(msg)
         self.fill_naked_singles()
 
     #
@@ -360,7 +368,7 @@ class Sudoku:
             # If all occurrences of d in a row are in the same box
             # delete all other occurrences of d in that box but different row
             for ii in range(GRIDSIZE):
-                reduced = False
+                msgs = []
                 box_no = set()
                 for jj in range(GRIDSIZE):
                     cell_val = self.grid[ii][jj]
@@ -372,14 +380,16 @@ class Sudoku:
                         if i2 != ii:
                             if isinstance(cell_val, set) and d in cell_val:
                                 self.grid[i2][j2].remove(d)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(d, cellname(i2, j2)))
+                    if len(msgs) > 0:
                         logging.debug(("BLR: digit {0} in row {1} only occurs" +
                                        " in box {2}").format(d, ascii_uppercase[ii], box_no + 1))
+                        for msg in msgs:
+                            logging.debug(msg)
 
             # Repeat for each column
             for jj in range(GRIDSIZE):
-                reduced = False
+                msgs = []
                 box_no = set()
                 for ii in range(GRIDSIZE):
                     cell_val = self.grid[ii][jj]
@@ -391,10 +401,12 @@ class Sudoku:
                         if j2 != jj:
                             if isinstance(cell_val, set) and d in cell_val:
                                 self.grid[i2][j2].remove(d)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(d, cellname(i2, j2)))
+                    if len(msgs) > 0:
                         logging.debug(("BLR: digit {0} in column {1} only occurs" +
                                        " in box {2}").format(d, jj + 1, box_no + 1))
+                        for msg in msgs:
+                            logging.debug(msg)
 
         self.fill_naked_singles()
 
@@ -445,7 +457,7 @@ class Sudoku:
     def xwing(self):
         cands = [[[] for _ in range(GRIDSIZE)] for _ in range(GRIDSIZE + 1)]
         for d in ALL_DIGITS:
-            reduced = False
+            msgs = []
             for ii, jj, cell_val in all_cells(self.grid):
                 if isinstance(cell_val, set) and d in cell_val:
                     cands[d][ii].append(jj)
@@ -460,20 +472,22 @@ class Sudoku:
                         if ii != val[0] and ii != val[1]:
                             if isinstance(self.grid[ii][key[0]], set) and d in self.grid[ii][key[0]]:
                                 self.grid[ii][key[0]].remove(d)
-                                reduced = True
+                                msgs.append("Remove {0} from {1}".format(d, cellname(ii, key[0])))
                             if isinstance(self.grid[ii][key[1]], set) and d in self.grid[ii][key[1]]:
                                 self.grid[ii][key[1]].remove(d)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(d, cellname(ii, key[1])))
+                    if len(msgs) > 0:
                         nw = cellname(val[0], key[0])
                         ne = cellname(val[0], key[1])
                         sw = cellname(val[1], key[0])
                         se = cellname(val[1], key[1])
                         logging.debug("Found horizontal xwing for {0}: {1}, {2}, {3}, {4}".format(d, nw, ne, sw, se))
+                        for msg in msgs:
+                            logging.debug(msg)
 
         cands = [[[] for _ in range(GRIDSIZE)] for _ in range(GRIDSIZE + 1)]
         for d in ALL_DIGITS:
-            reduced = False
+            msgs = []
             for ii, jj, cell_val in all_cells(self.grid):
                 if isinstance(cell_val, set) and d in cell_val:
                     cands[d][jj].append(ii)
@@ -488,16 +502,18 @@ class Sudoku:
                         if jj != val[0] and jj != val[1]:
                             if isinstance(self.grid[key[0]][jj], set) and d in self.grid[key[0]][jj]:
                                 self.grid[key[0]][jj].remove(d)
-                                reduced = True
+                                msgs.append("Remove {0} from {1}".format(d, cellname(key[0], jj)))
                             if isinstance(self.grid[key[1]][jj], set) and d in self.grid[key[1]][jj]:
                                 self.grid[key[1]][jj].remove(d)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(d, cellname(key[1], jj)))
+                    if len(msgs) > 0:
                         nw = cellname(key[0], val[0])
                         ne = cellname(key[0], val[1])
                         sw = cellname(key[1], val[0])
                         se = cellname(key[1], val[1])
                         logging.debug("Found vertical xwing for {0}: {1}, {2}, {3}, {4}".format(d, nw, ne, sw, se))
+                        for msg in msgs:
+                            logging.debug(msg)
 
         self.fill_naked_singles()
 
@@ -527,19 +543,21 @@ class Sudoku:
 
             for key, val in h_occurrences.items():
                 if val['cols'] == set(key) and len(val['rows']) == len(key):
-                    reduced = False
+                    msgs = []
                     for ii in set(range(GRIDSIZE)).symmetric_difference(val['rows']):
                         for jj in val['cols']:
                             cell_val = self.grid[ii][jj]
                             if isinstance(cell_val, set) and d in cell_val:
                                 self.grid[ii][jj].remove(d)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(d, cellname(ii, jj)))
+                    if len(msgs) > 0:
                         logging.debug("Horizontal swordfish/jellyfish for {0}: {1}: {2}".format(
                             d,
                             ', '.join(sorted(list(map(lambda x: ascii_uppercase[x], val['rows'])))),
                             ', '.join(sorted(list(map(lambda x: str(x + 1), val['cols']))))
                         ))
+                        for msg in msgs:
+                            logging.debug(msg)
 
             v_occurrences = defaultdict(lambda: {'rows': set(), 'cols': set()})
             for ii, jj, kk in all_triples():
@@ -555,19 +573,21 @@ class Sudoku:
 
             for key, val in v_occurrences.items():
                 if val['rows'] == set(key) and len(val['cols']) == len(key):
-                    reduced = False
+                    msgs = []
                     for jj in set(range(GRIDSIZE)).symmetric_difference(val['cols']):
                         for ii in val['rows']:
                             cell_val = self.grid[ii][jj]
                             if isinstance(cell_val, set) and d in cell_val:
                                 self.grid[ii][jj].remove(d)
-                                reduced = True
-                    if reduced:
+                                msgs.append("Remove {0} from {1}".format(d, cellname(ii, jj)))
+                    if len(msgs) > 0:
                         logging.debug("Vertical swordfish/jellyfish for {0}: {1}: {2}".format(
                             d,
                             ', '.join(sorted(list(map(lambda x: ascii_uppercase[x], val['rows'])))),
                             ', '.join(sorted(list(map(lambda x: str(x + 1), val['cols']))))
                         ))
+                        for msg in msgs:
+                            logging.debug(msg)
 
         self.fill_naked_singles()
 
@@ -723,28 +743,42 @@ class Sudoku:
                                     # Search the row
                                     if i1 != i2:
                                         for j3 in outside_box(j1):
+                                            msgs = []
                                             if self.grid[i1][j3] == search_for:
                                                 for j4 in in_box(j1):
                                                     if j4 != j1:
                                                         if isinstance(self.grid[i1][j4], set) and \
                                                                 d in self.grid[i1][j4]:
                                                             self.grid[i1][j4].remove(d)
-                                                            logging.debug("Found xyz wing: {0}, {1}, {2}".format(
-                                                                cellname(i1, j1), cellname(i2, j2), cellname(i1, j3)
+                                                            msgs.append("Remove {0} from {1}".format(
+                                                                d, cellname(i1, j4)
                                                             ))
+                                            if len(msgs) > 0:
+                                                logging.debug("Found xyz wing: {0}, {1}, {2}".format(
+                                                    cellname(i1, j1), cellname(i2, j2), cellname(i1, j3)
+                                                ))
+                                                for msg in msgs:
+                                                    logging.debug(msg)
 
                                     # Search the column
                                     if j1 != j2:
                                         for i3 in outside_box(i1):
+                                            msgs = []
                                             if self.grid[i3][j1] == search_for:
                                                 for i4 in in_box(i1):
                                                     if i4 != i1:
                                                         if isinstance(self.grid[i4][j1], set) and \
                                                                 d in self.grid[i4][j1]:
                                                             self.grid[i4][j1].remove(d)
-                                                            logging.debug("Found xyz wing: {0}, {1}, {2}".format(
-                                                                cellname(i1, j1), cellname(i2, j2), cellname(i3, j1)
+                                                            msgs.append("Remove {0} from {1}".format(
+                                                                d, cellname(i4, j1)
                                                             ))
+                                            if len(msgs) > 0:
+                                                logging.debug("Found xyz wing: {0}, {1}, {2}".format(
+                                                    cellname(i1, j1), cellname(i2, j2), cellname(i3, j1)
+                                                ))
+                                                for msg in msgs:
+                                                    logging.debug(msg)
         self.fill_naked_singles()
 
     @solver(100)
