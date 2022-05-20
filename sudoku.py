@@ -455,19 +455,21 @@ class Sudoku:
 
     @solver(10)
     def xwing(self):
-        cands = [[[] for _ in range(GRIDSIZE)] for _ in range(GRIDSIZE + 1)]
+        cands = [{'h': [[] for _ in range(GRIDSIZE)], 'v': [[] for _ in range(GRIDSIZE)]}
+                 for _ in range(GRIDSIZE + 1)]
         for d in ALL_DIGITS:
-            msgs = []
             for ii, jj, cell_val in all_cells(self.grid):
                 if isinstance(cell_val, set) and d in cell_val:
-                    cands[d][ii].append(jj)
+                    cands[d]['h'][ii].append(jj)
+                    cands[d]['v'][jj].append(ii)
             # Invert the list into a dict
             occurrences = defaultdict(list)
-            for ii, val in enumerate(cands[d]):
+            for ii, val in enumerate(cands[d]['h']):
                 kt = tuple(val)
                 occurrences[kt].append(ii)
             for key, val in occurrences.items():
                 if len(key) == 2 and len(val) == 2:
+                    msgs = []
                     for ii in range(GRIDSIZE):
                         if ii != val[0] and ii != val[1]:
                             if isinstance(self.grid[ii][key[0]], set) and d in self.grid[ii][key[0]]:
@@ -485,19 +487,7 @@ class Sudoku:
                         for msg in msgs:
                             logging.debug(msg)
 
-        cands = [[[] for _ in range(GRIDSIZE)] for _ in range(GRIDSIZE + 1)]
-        for d in ALL_DIGITS:
-            msgs = []
-            for ii, jj, cell_val in all_cells(self.grid):
-                if isinstance(cell_val, set) and d in cell_val:
-                    cands[d][jj].append(ii)
-            # Invert the list into a dict
-            occurrences = defaultdict(list)
-            for ii, val in enumerate(cands[d]):
-                kt = tuple(val)
-                occurrences[kt].append(ii)
-            for key, val in occurrences.items():
-                if len(key) == 2 and len(val) == 2:
+                    msgs = []
                     for jj in range(GRIDSIZE):
                         if jj != val[0] and jj != val[1]:
                             if isinstance(self.grid[key[0]][jj], set) and d in self.grid[key[0]][jj]:
