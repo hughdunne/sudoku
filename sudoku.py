@@ -333,9 +333,9 @@ class Sudoku:
                     if isinstance(cell_val, set) and d in cell_val:
                         contained.add((ii, jj))
                 if len(contained) == 1:
-                    ii, jj = max(contained)
-                    t = (ii, jj)
+                    t = max(contained)
                     if t not in found:
+                        ii, jj = t
                         self.grid[ii][jj] = {d}
                         logging.debug("{0}: {1} -> {{{2}}}".format(blockname(bb), cellname(ii, jj), d))
                         found.add(t)
