@@ -9,7 +9,7 @@ Should work with any recent version of Python.
 
 Start a python shell in the directory where you have installed this code, and type:
 
-    from sudoku import *
+    from sudoku import Sudoku
     s = Sudoku(initstr)
 
 The initialization string is a comma-separated string representing the value or set of candidates for each cell.

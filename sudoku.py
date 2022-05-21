@@ -269,8 +269,9 @@ class Sudoku:
                         if isinstance(cell_val, set):
                             ks = set(key)
                             if not (cell_val.issubset(ks) or cell_val.isdisjoint(ks)):
+                                msgs.append("Remove {0} from {1}".format(
+                                    self.grid[ii][jj].intersection(ks), cellname(ii, jj)))
                                 self.grid[ii][jj].difference_update(ks)
-                                msgs.append("Remove {0} from {1}".format(ks, cellname(ii, jj)))
                     if len(msgs) > 0:
                         logging.debug("Found {0}: {1} in {2}".format(tuple_name, key, blockname(bb)))
                         for msg in msgs:
