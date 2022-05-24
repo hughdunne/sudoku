@@ -686,7 +686,7 @@ class Sudoku:
                                 search_for = cell_val1.symmetric_difference(cell_val2)
                                 digit_to_remove = max(cell_val2.symmetric_difference(common))
                                 seenby2 = seen_by(i2, j2)
-                                if j1 != j2:
+                                if i1 != i2:
                                     for j3 in outside_box(j1):
                                         cell_val3 = self.grid[i1][j3]
                                         if cell_val3 == search_for:
@@ -706,7 +706,7 @@ class Sudoku:
                                                 ))
                                                 for msg in msgs:
                                                     logging.debug(msg)
-                                if i1 != i2:
+                                if j1 != j2:
                                     for i3 in outside_box(i1):
                                         cell_val3 = self.grid[i3][j1]
                                         if cell_val3 == search_for:

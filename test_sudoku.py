@@ -369,6 +369,10 @@ def test_xy_wing():
     rotate_grid_anticlockwise(s)
     assert s.save() == TESTSTR7169B
 
+    s = Sudoku(XY_WING_BUG)
+    s.xy_wing()
+    assert s.save() == XY_WING_BUG_A
+
 
 def test_xyz_wing():
     s = Sudoku(TESTSTR3619)
