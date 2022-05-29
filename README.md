@@ -64,9 +64,25 @@ When the puzzle is solved, you will see the output:
 
     Puzzle solved!
 
+## Testing
+
+Quick test:
+
+    pytest -m "not slow" test_sudoku.py
+
+This runs all tests except `test_bruteforce_slow` (see below).
+
+Complete test (may take several minutes):
+
+    pytest test_sudoku.py
+
+This runs all tests including `test_bruteforce_slow`, which tests the brute force solver on a puzzle
+which was designed to defeat backtracking algorithms.
+See this page on [Wikipedia](https://en.wikipedia.org/wiki/Sudoku_solving_algorithms#Backtracking)
+
 ## Developer Notes
 
-The board is represented by the `grid` attribute, which is a 9-element list (one for each row: 0 -> Row A,
+The board is represented by the `grid` attribute of a Sudoku object. This is a 9-element list (one for each row: 0 -> Row A,
 1 -> Row B etc.) of 9-element lists (one for each cell in the row). A cell value is either an  integer if
 the cell has been solved, or a set of integers representing the possible candidates for that cell.
 
