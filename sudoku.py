@@ -17,7 +17,7 @@ def all_cells(grid):
             yield ii, jj, cell_val
 
 
-def all_pairs(base: int = 0):
+def all_pairs(base: int = 1):
     # Use base = 0 to get all possible pairs of coordinates
     # Use base = 1 to get all possible pairs of candidates
     for ii in range(base, base + GRIDSIZE):
@@ -25,13 +25,13 @@ def all_pairs(base: int = 0):
             yield {ii, jj}
 
 
-def all_triples(base: int = 0):
+def all_triples(base: int = 1):
     for pp in all_pairs(base):
         for kk in range(max(pp) + 1, base + GRIDSIZE):
             yield pp.union({kk})
 
 
-def all_quads(base: int = 0):
+def all_quads(base: int = 1):
     for tt in all_triples(base):
         for ll in range(max(tt) + 1, base + GRIDSIZE):
             yield tt.union({ll})
@@ -241,11 +241,11 @@ class Sudoku:
     def find_naked_tuples(self, tuple_len: int):
         def get_gen(tup_len):
             if tup_len == 2:
-                return all_pairs(1)
+                return all_pairs()
             elif tup_len == 3:
-                return all_triples(1)
+                return all_triples()
             else:  # Assume 4
-                return all_quads(1)
+                return all_quads()
 
         tuple_name = TUPLE_NAMES[tuple_len]
         for bb, block in enumerate(self.all_blocks()):
@@ -281,11 +281,11 @@ class Sudoku:
 
     def find_hidden_tuples(self, tuple_len: int):
         if tuple_len == 2:
-            tuple_gen = all_pairs(1)
+            tuple_gen = all_pairs()
         elif tuple_len == 3:
-            tuple_gen = all_triples(1)
+            tuple_gen = all_triples()
         else:  # Assume 4
-            tuple_gen = all_quads(1)
+            tuple_gen = all_quads()
         tuple_name = TUPLE_NAMES[tuple_len]
 
         for tup in tuple_gen:
@@ -531,7 +531,7 @@ class Sudoku:
                     cands[d]['h'][ii].append(jj)
                     cands[d]['v'][jj].append(ii)
             h_occurrences = defaultdict(lambda: {'rows': set(), 'cols': set()})
-            for ii, jj, kk in all_triples():
+            for ii, jj, kk in all_triples(0):
                 for i1, val in enumerate(cands[d]['h']):
                     if len(val) > 0 and {ii, jj, kk}.issuperset(val):
                         h_occurrences[(ii, jj, kk)]['rows'].update({i1})
@@ -561,7 +561,7 @@ class Sudoku:
                             logging.debug(msg)
 
             v_occurrences = defaultdict(lambda: {'rows': set(), 'cols': set()})
-            for ii, jj, kk in all_triples():
+            for ii, jj, kk in all_triples(0):
                 for i1, val in enumerate(cands[d]['v']):
                     if len(val) > 0 and {ii, jj, kk}.issuperset(val):
                         v_occurrences[(ii, jj, kk)]['cols'].update({i1})
