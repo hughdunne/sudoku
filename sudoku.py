@@ -2,6 +2,7 @@ import logging
 import inspect
 from string import ascii_uppercase
 from collections import Counter, defaultdict
+from enum import Enum
 
 BOXSIZE = 3
 GRIDSIZE = BOXSIZE * BOXSIZE
@@ -780,6 +781,102 @@ class Sudoku:
                                                 ))
                                                 for msg in msgs:
                                                     logging.debug(msg)
+        self.fill_naked_singles()
+
+    @solver(20)
+    def simple_coloring(self):
+        class Color(Enum):
+            green = 0
+            blue = 1
+
+        def opposite_color(color: Color) -> Color:
+            return Color(1 - color.value)
+
+        def are_conjugate(cell1, cell2) -> bool:
+            return frozenset((cell1, cell2)) in color_data[d]['conjugate_pairs']
+
+        color_data = [{
+            'raw_data': dict(),         # One key for each block that contains current digit as a candidate
+                                        # Value is list of cells containing the candidate
+            'occurences': dict(),       # One key for each cell that contains current digit as a candidate
+                                        # Value is dict containing color information for the cell
+            'conjugate_pairs': set(),   # Set of pairs of cells which are in a conjugate relationship to each other
+            'cells_to_reduce': set(),   # Cells from which we should remove the candidate
+            'remove_all_green': False,
+            'remove_all_blue': False
+        } for _ in range(1 + GRIDSIZE)]
+
+        def propagate_color(cell_coords, color: Color):
+            opp_color = opposite_color(color)
+            logging.debug("{0}: Coloring {1} {2}".format(d, cellname(*cell_coords), color.name))
+            color_data[d]['occurences'][cell_coords].update({
+                'color': color,
+                'not_' + color.name: False,
+                'not_' + opp_color.name: True
+            })
+            for other_cell in seen_by(*cell_coords):
+                if other_cell in color_data[d]['occurences']:
+                    other_data = color_data[d]['occurences'][other_cell]
+                    if other_data['color'] is None:
+                        if are_conjugate(cell_coords, other_cell):
+                            propagate_color(other_cell, opp_color)
+                        else:
+                            other_data['not_' + color.name] = True
+                    elif other_data['color'] == color:
+                        logging.debug('{0}: {1} and {2} see each other and are both {3}'.format(
+                            d, cellname(*cell_coords), cellname(*other_cell), color.name
+                        ))
+                        color_data[d]['remove_all_' + color.name] = True
+
+        ctr = self.digits_solved()
+        for d in ALL_DIGITS:
+            if ctr[d] == GRIDSIZE:
+                continue
+            start_pair = None
+            for bb, block in enumerate(self.all_blocks()):
+                temp_data = []
+                for ii, jj, cell_val in block:
+                    if isinstance(cell_val, set) and d in cell_val:
+                        temp_data.append((ii, jj))
+                        if (ii, jj) not in color_data[d]['occurences']:
+                            color_data[d]['occurences'][(ii, jj)] = {
+                                'color': None,
+                                'not_green': None,
+                                'not_blue': None
+                            }
+                temp_len = len(temp_data)
+                if temp_len > 0:
+                    color_data[d]['raw_data'][bb] = temp_data
+                if temp_len == 2:
+                    color_data[d]['conjugate_pairs'].add(frozenset((temp_data[0], temp_data[1])))
+                    if start_pair is None:
+                        start_pair = temp_data
+            if start_pair is not None:
+                propagate_color(start_pair[0], Color.green)
+                propagate_color(start_pair[1], Color.blue)
+                # Look for color clashes
+                for coords, cell_data in color_data[d]['occurences'].items():
+                    if cell_data['not_green'] and cell_data['not_blue']:
+                        color_data[d]['cells_to_reduce'].add(coords)
+                        logging.debug('{0}: {1} sees both blue and green'.format(d, cellname(*coords)))
+                for bb, block_data in color_data[d]['raw_data'].items():
+                    cell_counter = Counter()
+                    for coords in block_data:
+                        cell = color_data[d]['occurences'][coords]
+                        if cell['color'] is not None:
+                            cell_counter[cell['color'].name] += 1
+                    for k, v in cell_counter.items():
+                        if v > 1:
+                            logging.debug("{0}: {1} {2} cells in {3}".format(d, v, k, blockname(bb)))
+                            color_data[d]['remove_all_' + k] = True
+                for c in Color:
+                    if color_data[d]['remove_all_' + c.name]:
+                        for coords, cell_data in color_data[d]['occurences'].items():
+                            if cell_data['color'] == c:
+                                color_data[d]['cells_to_reduce'].add(coords)
+
+                for cell in color_data[d]['cells_to_reduce']:
+                    self.grid[cell[0]][cell[1]].discard(d)
         self.fill_naked_singles()
 
     @solver(100)

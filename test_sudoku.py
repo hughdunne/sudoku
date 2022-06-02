@@ -386,6 +386,15 @@ def test_xyz_wing():
     assert s.save() == TESTSTR3619A
 
 
+def test_simple_coloring():
+    s = Sudoku(COLORING_A)
+    s.simple_coloring()
+    assert s.save() == COLORING_B
+    s = Sudoku(COLORING_C)
+    s.simple_coloring()
+    assert s.save() == COLORING_D
+
+
 def test_bruteforce():
     s = Sudoku(TESTSTR3700)
     s.bruteforce()
