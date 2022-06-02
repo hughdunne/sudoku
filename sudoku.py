@@ -853,7 +853,6 @@ class Sudoku:
                         start_pair = temp_data
             if start_pair is not None:
                 propagate_color(start_pair[0], Color.green)
-                propagate_color(start_pair[1], Color.blue)
                 # Look for color clashes
                 for coords, cell_data in color_data[d]['occurences'].items():
                     if cell_data['not_green'] and cell_data['not_blue']:
