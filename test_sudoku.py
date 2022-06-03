@@ -393,6 +393,9 @@ def test_simple_coloring():
     s = Sudoku(COLORING_C)
     s.simple_coloring()
     assert s.save() == COLORING_D
+    s = Sudoku(COLORING_BUG)
+    s.simple_coloring()
+    assert s.save() == COLORING_BUG_A
 
 
 def test_bruteforce():

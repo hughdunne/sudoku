@@ -19,8 +19,8 @@ Your next step should be:
 
     s.fill_blank_cells()
 
-This will ensure that any blank cells will be filled with the set of candidates, i.e. all possible values for
-this cell, eliminating any solved digits in other cells that are seen by this cell (i.e. in the same row, column or box).
+This will ensure that any blank cells will be filled with the set of candidates, i.e. all possible values for this cell,
+eliminating any solved digits in other cells that are seen by this cell (i.e. in the same row, column or box).
 
 Now try out various rules, e.g:
 
@@ -37,24 +37,35 @@ advanced rules, reverting to the simplest rule when progress is made. If all els
 
 This method tries all possible solutions, rolling back if an error is encountered.
 
-The complete list of rules is:
+Note that each rule has a rank, and the higher the rank, the more advanced the rule is considered to be. You can 
+suppress advanced rules in `kitchen_sink` by specifying the maximum rank to try. E.g. to suppress the brute force
+method, give the command:
 
-* find_hidden_singles
-* find_naked_pairs
-* find_hidden_pairs
-* find_naked_triples
-* find_hidden_triples
-* find_naked_quads
-* find_hidden_quads
-* blr (Box-line reduction)
-* pointing
-* xwing
-* swordfish_jellyfish
-* lformation
-* deadly_pattern
-* xy_wing
-* xyz_wing
-* bruteforce
+    s.kitchen_sink(99)
+
+Since the rank of `bruteforce` is 100, `kitchen_sink` will exit if it cannot solve the puzzle with lower-ranked rules.
+
+The complete list of rules and their ranks is:
+
+| Name                |   Rank | Notes              |
+|---------------------|-------:|--------------------|
+| find_hidden_singles |      1 |                    |
+| find_naked_pairs    |      2 |                    |
+| find_naked_triples  |      3 |                    |
+| find_naked_quads    |      4 |                    |
+| find_hidden_pairs   |      5 |                    |
+| find_hidden_triples |      6 |                    |
+| find_hidden_quads   |      7 |                    |
+| blr                 |      8 | Box-line reduction |
+| pointing            |      9 |                    |
+| xwing               |     10 |                    |
+| swordfish_jellyfish |     11 |                    |
+| lformation          |     12 | L-formation        |
+| deadly_pattern      |     13 |                    |
+| xy_wing             |     14 |                    |
+| xyz_wing            |     15 |                    |
+| simple_coloring     |     20 |                    |
+| bruteforce          |    100 |                    |
 
 Each method will print out debugging information on cells solved or candidates eliminated. For example:
 
@@ -78,13 +89,13 @@ Complete test (may take several minutes):
 
 This runs all tests including `test_bruteforce_slow`, which tests the brute force solver on a puzzle
 which was designed to defeat backtracking algorithms.
-See this page on [Wikipedia](https://en.wikipedia.org/wiki/Sudoku_solving_algorithms#Backtracking)
+See this page on [Wikipedia](https://en.wikipedia.org/wiki/Sudoku_solving_algorithms#Backtracking).
 
 ## Developer Notes
 
-The board is represented by the `grid` attribute of a Sudoku object. This is a 9-element list (one for each row: 0 -> Row A,
-1 -> Row B etc.) of 9-element lists (one for each cell in the row). A cell value is either an  integer if
-the cell has been solved, or a set of integers representing the possible candidates for that cell.
+The board is represented by the `grid` attribute of a Sudoku object. This is a 9-element list (one for each row:
+0 &#8594; Row A, 1 &#8594; Row B etc.) of 9-element lists (one for each cell in the row). A cell value is either an 
+integer if the cell has been solved, or a set of integers representing the possible candidates for that cell.
 
 To add a logical rule to the above list, it must obey the following convention:
 

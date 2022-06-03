@@ -901,7 +901,7 @@ class Sudoku:
             if finished:
                 break
 
-    def kitchen_sink(self):
+    def kitchen_sink(self, maxrank: int = 100):
         # Try simple rules, then more advanced ones, then brute force.
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
         solvers = [{'name': x, 'func': y} for x, y in methods if hasattr(y, 'rank')]
@@ -909,9 +909,13 @@ class Sudoku:
         idx = 0
         self.fill_blank_cells()
         while not self.solved():
-            logging.debug(solvers[idx]['name'])
+            rule = solvers[idx]
+            if rule['func'].rank > maxrank:
+                logging.debug("Giving up")
+                return
+            logging.debug(rule['name'])
             old_state = self.save()
-            solvers[idx]['func']()
+            rule['func']()
             if self.save() == old_state:
                 # No progress has been made. Try a more advanced method.
                 idx += 1
