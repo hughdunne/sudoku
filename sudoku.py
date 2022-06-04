@@ -812,7 +812,8 @@ class Sudoku:
             color_data[d]['occurences'][cell_coords].update({
                 'color': color,
                 'not_' + color.name: False,
-                'not_' + opp_color.name: True
+                'not_' + opp_color.name: True,
+                'tried': True
             })
             for other_cell in seen_by(*cell_coords):
                 if other_cell in color_data[d]['occurences']:
@@ -832,27 +833,37 @@ class Sudoku:
         for d in ALL_DIGITS:
             if ctr[d] == GRIDSIZE:
                 continue
-            start_pair = None
             for bb, block in enumerate(self.all_blocks()):
                 temp_data = []
                 for ii, jj, cell_val in block:
                     if isinstance(cell_val, set) and d in cell_val:
                         temp_data.append((ii, jj))
                         if (ii, jj) not in color_data[d]['occurences']:
-                            color_data[d]['occurences'][(ii, jj)] = {
-                                'color': None,
-                                'not_green': None,
-                                'not_blue': None
-                            }
+                            color_data[d]['occurences'][(ii, jj)] = {'tried': False}
                 temp_len = len(temp_data)
                 if temp_len > 0:
                     color_data[d]['raw_data'][bb] = temp_data
                 if temp_len == 2:
-                    color_data[d]['conjugate_pairs'].add(frozenset((temp_data[0], temp_data[1])))
-                    if start_pair is None:
-                        start_pair = temp_data
-            if start_pair is not None:
-                propagate_color(start_pair[0], Color.green)
+                    first = temp_data[0]
+                    second = temp_data[1]
+                    color_data[d]['occurences'][first]['is_cp'] = True
+                    color_data[d]['occurences'][second]['is_cp'] = True
+                    color_data[d]['conjugate_pairs'].add(frozenset((first, second)))
+            while True:
+                try_next = []
+                for coords, cell_data in color_data[d]['occurences'].items():
+                    cell_data.update({
+                        'color': None,
+                        'not_green': None,
+                        'not_blue': None
+                    })
+                    if 'is_cp' in cell_data and cell_data['is_cp'] and not cell_data['tried']:
+                        try_next.append(coords)
+                if len(try_next) == 0:
+                    break
+                logging.debug("Starting chain")
+                propagate_color(try_next[0], Color.green)
+
                 # Look for color clashes
                 for coords, cell_data in color_data[d]['occurences'].items():
                     if cell_data['not_green'] and cell_data['not_blue']:
