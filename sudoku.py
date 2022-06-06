@@ -87,10 +87,10 @@ def blockname(bb: int) -> str:
     blocktype = ["Row", "Col", "Box"][bb // GRIDSIZE]
     ii = bb % GRIDSIZE
     if blocktype == "Row":
-        ii = ascii_uppercase[ii]
+        suffix = ascii_uppercase[ii]
     else:
-        ii += 1
-    return blocktype + ' ' + str(ii)
+        suffix = str(ii + 1)
+    return blocktype + ' ' + suffix
 
 
 def solver(rank: int):
