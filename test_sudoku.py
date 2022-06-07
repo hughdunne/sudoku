@@ -442,6 +442,9 @@ def test_kitchen_sink():
     s = Sudoku(TESTSTR2975)
     s.kitchen_sink()
     assert s.save() == TESTSTR2975A
+    s = Sudoku(EVIL)
+    s.kitchen_sink(99)
+    assert s.save() == EVIL_A
 
 
 def test_getitem():

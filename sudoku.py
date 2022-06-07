@@ -18,24 +18,16 @@ def all_cells(grid):
             yield ii, jj, cell_val
 
 
-def all_pairs(base: int = 1):
-    # Use base = 0 to get all possible pairs of coordinates
-    # Use base = 1 to get all possible pairs of candidates
-    for ii in range(base, base + GRIDSIZE):
-        for jj in range(ii + 1, base + GRIDSIZE):
-            yield {ii, jj}
-
-
-def all_triples(base: int = 1):
-    for pp in all_pairs(base):
-        for kk in range(max(pp) + 1, base + GRIDSIZE):
-            yield pp.union({kk})
-
-
-def all_quads(base: int = 1):
-    for tt in all_triples(base):
-        for ll in range(max(tt) + 1, base + GRIDSIZE):
-            yield tt.union({ll})
+def all_sets(size: int, base: int = 1):
+    # Use base = 0 to get all possible sets of coordinates.
+    # Use base = 1 to get all possible sets of candidates.
+    if size == 1:
+        for ii in range(base, base + GRIDSIZE):
+            yield {ii}
+    else:
+        for tt in all_sets(size - 1, base):
+            for ll in range(max(tt) + 1, base + GRIDSIZE):
+                yield tt.union({ll})
 
 
 def box_containing(ii: int, jj: int):
@@ -240,14 +232,6 @@ class Sudoku:
             yield self.box(box_no)
 
     def find_naked_tuples(self, tuple_len: int):
-        def get_gen(tup_len):
-            if tup_len == 2:
-                return all_pairs()
-            elif tup_len == 3:
-                return all_triples()
-            else:  # Assume 4
-                return all_quads()
-
         tuple_name = TUPLE_NAMES[tuple_len]
         for bb, block in enumerate(self.all_blocks()):
             msgs = []
@@ -260,7 +244,7 @@ class Sudoku:
             if unsolved <= tuple_len:
                 continue
             cc = Counter()
-            for t in get_gen(tuple_len):
+            for t in all_sets(tuple_len):
                 for k, v in c.items():
                     if set(k).issubset(t):
                         cc[tuple(t)] += v
@@ -281,15 +265,8 @@ class Sudoku:
         self.fill_naked_singles()
 
     def find_hidden_tuples(self, tuple_len: int):
-        if tuple_len == 2:
-            tuple_gen = all_pairs()
-        elif tuple_len == 3:
-            tuple_gen = all_triples()
-        else:  # Assume 4
-            tuple_gen = all_quads()
         tuple_name = TUPLE_NAMES[tuple_len]
-
-        for tup in tuple_gen:
+        for tup in all_sets(tuple_len):
             for bb, block in enumerate(self.all_blocks()):
                 msgs = []
                 unsolved = 0
@@ -532,7 +509,7 @@ class Sudoku:
                     cands[d]['h'][ii].append(jj)
                     cands[d]['v'][jj].append(ii)
             h_occurrences = defaultdict(lambda: {'rows': set(), 'cols': set()})
-            for ii, jj, kk in all_triples(0):
+            for ii, jj, kk in all_sets(3, 0):
                 for i1, val in enumerate(cands[d]['h']):
                     if len(val) > 0 and {ii, jj, kk}.issuperset(val):
                         h_occurrences[(ii, jj, kk)]['rows'].update({i1})
@@ -562,7 +539,7 @@ class Sudoku:
                             logging.debug(msg)
 
             v_occurrences = defaultdict(lambda: {'rows': set(), 'cols': set()})
-            for ii, jj, kk in all_triples(0):
+            for ii, jj, kk in all_sets(3, 0):
                 for i1, val in enumerate(cands[d]['v']):
                     if len(val) > 0 and {ii, jj, kk}.issuperset(val):
                         v_occurrences[(ii, jj, kk)]['cols'].update({i1})
@@ -915,13 +892,13 @@ class Sudoku:
     def kitchen_sink(self, maxrank: int = 100):
         # Try simple rules, then more advanced ones, then brute force.
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        solvers = [{'name': x, 'func': y} for x, y in methods if hasattr(y, 'rank')]
-        solvers.sort(key=lambda k: k['func'].rank)
+        solvers = [{'name': x, 'func': y, 'rank': y.rank} for x, y in methods if hasattr(y, 'rank')]
+        solvers.sort(key=lambda k: k['rank'])
         idx = 0
         self.fill_blank_cells()
         while not self.solved():
             rule = solvers[idx]
-            if rule['func'].rank > maxrank:
+            if rule['rank'] > maxrank:
                 logging.debug("Giving up")
                 return
             logging.debug(rule['name'])
