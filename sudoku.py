@@ -866,6 +866,54 @@ class Sudoku:
                     self.grid[cell[0]][cell[1]].discard(d)
         self.fill_naked_singles()
 
+    @solver(25)
+    def forced_chains(self):
+        for ii, jj, cell_val in all_cells(self.grid):
+            if isinstance(cell_val, set) and len(cell_val) == 2:
+                orig_state = self.save()
+                states = []
+                for d in cell_val:
+                    try:
+                        logging.debug('Try setting {0} to {1}'.format(cellname(ii, jj), d))
+                        prev_state = orig_state
+                        self.grid[ii][jj] = {d}
+                        self.fill_naked_singles()
+                        if self.solved():
+                            return
+                        while True:
+                            self.find_hidden_singles()
+                            curr_state = self.save()
+                            if curr_state == prev_state:
+                                states.append(curr_state)
+                                break
+                            prev_state = curr_state
+                    except ValueError as e:
+                        logging.debug('Error when setting {0} to {1}: {2}'.format(cellname(ii, jj), d, e))
+                        self.load(orig_state)
+                        self.grid[ii][jj].discard(d)
+                        self.fill_naked_singles()
+                        return
+                    self.load(orig_state)
+
+                cells_1 = orig_state.split(',')
+                cells_2 = states[0].split(',')
+                cells_3 = states[1].split(',')
+                for i1, cell1 in enumerate(cells_1):
+                    if len(cell1) == 1:
+                        continue
+                    cell1 = set(map(int, cell1))
+                    cell2 = set(map(int, cells_2[i1]))
+                    cell3 = set(map(int, cells_3[i1]))
+                    if cell2 != cell_val and cell3 != cell_val:
+                        can_discard = cell1.symmetric_difference(cell2).intersection(cell1.symmetric_difference(cell3))
+                        if len(can_discard) > 0:
+                            ii2, jj2 = i1 // GRIDSIZE, i1 % GRIDSIZE
+                            logging.debug("In either case, can discard {0} from {1}".format(
+                                can_discard, cellname(ii2, jj2))
+                            )
+                            self.grid[ii2][jj2].symmetric_difference_update(can_discard)
+        self.fill_naked_singles()
+
     @solver(100)
     def bruteforce(self):
         # Operates using a stack, so we can roll back changes.

@@ -438,12 +438,19 @@ def test_solved():
     assert s.valid()
 
 
+def test_forced_chains():
+    s = Sudoku(EVIL)
+    s.fill_blank_cells()
+    s.forced_chains()
+    assert s.save() == EVIL_B
+
+
 def test_kitchen_sink():
     s = Sudoku(TESTSTR2975)
     s.kitchen_sink()
     assert s.save() == TESTSTR2975A
     s = Sudoku(EVIL)
-    s.kitchen_sink(99)
+    s.kitchen_sink(24)
     assert s.save() == EVIL_A
 
 
