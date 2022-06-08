@@ -901,10 +901,13 @@ class Sudoku:
                 for i1, cell1 in enumerate(cells_1):
                     if len(cell1) == 1:
                         continue
-                    cell1 = set(map(int, cell1))
-                    cell2 = set(map(int, cells_2[i1]))
-                    cell3 = set(map(int, cells_3[i1]))
-                    if cell2 != cell_val and cell3 != cell_val:
+                    cell2 = cells_2[i1]
+                    cell3 = cells_3[i1]
+                    str2set = lambda x: set(map(int, x))
+                    cell1 = str2set(cell1)
+                    cell2 = str2set(cell2)
+                    cell3 = str2set(cell3)
+                    if cell2 != cell_val and cell3 != cell_val and cell2 != cell3:
                         can_discard = cell1.symmetric_difference(cell2).intersection(cell1.symmetric_difference(cell3))
                         if len(can_discard) > 0:
                             ii2, jj2 = i1 // GRIDSIZE, i1 % GRIDSIZE

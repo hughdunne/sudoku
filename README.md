@@ -65,6 +65,7 @@ The complete list of rules and their ranks is:
 | xy_wing             |     14 |                    |
 | xyz_wing            |     15 |                    |
 | simple_coloring     |     20 |                    |
+| forced_chains       |     25 |                    |
 | bruteforce          |    100 |                    |
 
 Each method will print out debugging information on cells solved or candidates eliminated. For example:
