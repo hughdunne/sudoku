@@ -85,6 +85,10 @@ def blockname(bb: int) -> str:
     return blocktype + ' ' + suffix
 
 
+def str2set(x: str):
+    return set(map(int, x))
+
+
 def solver(rank: int):
     def inner(func):
         func.rank = rank
@@ -114,7 +118,7 @@ class Sudoku:
             if len(cell_val) == 1:
                 self.grid[ii][jj] = int(cell_val)
             else:
-                self.grid[ii][jj] = set(map(int, set(cell_val)))
+                self.grid[ii][jj] = str2set(cell_val)
 
     def save(self) -> str:
         chars = []
@@ -903,11 +907,10 @@ class Sudoku:
                         continue
                     cell2 = cells_2[i1]
                     cell3 = cells_3[i1]
-                    str2set = lambda x: set(map(int, x))
-                    cell1 = str2set(cell1)
-                    cell2 = str2set(cell2)
-                    cell3 = str2set(cell3)
                     if cell2 != cell_val and cell3 != cell_val and cell2 != cell3:
+                        cell1 = str2set(cell1)
+                        cell2 = str2set(cell2)
+                        cell3 = str2set(cell3)
                         can_discard = cell1.symmetric_difference(cell2).intersection(cell1.symmetric_difference(cell3))
                         if len(can_discard) > 0:
                             ii2, jj2 = i1 // GRIDSIZE, i1 % GRIDSIZE
