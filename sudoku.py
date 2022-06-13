@@ -188,19 +188,19 @@ class Sudoku:
             reduced = False
             for ii, jj, cell_val in all_cells(self.grid):
                 if isinstance(cell_val, set) and len(cell_val) == 1:
-                    cell_val = max(cell_val)
-                    self.grid[ii][jj] = cell_val
-                    logging.debug("{0} -> {1}".format(cellname(ii, jj), cell_val))
+                    cell_solution = max(cell_val)
+                    self.grid[ii][jj] = cell_solution
+                    logging.debug("{0} -> {1}".format(cellname(ii, jj), cell_solution))
                     reduced = True
                     for i2, j2 in seen_by(ii, jj):
                         other_val = self.grid[i2][j2]
                         if isinstance(other_val, set):
-                            other_val.discard(cell_val)
+                            other_val.discard(cell_solution)
                             if len(other_val) == 0:
                                 raise ValueError("No solution for cell {0}".format(cellname(i2, j2)))
-                        elif cell_val == other_val:
+                        elif cell_solution == other_val:
                             raise ValueError("Duplicate digit {0} in {1}, {2}".format(
-                                cell_val, cellname(ii, jj), cellname(i2, j2)
+                                cell_solution, cellname(ii, jj), cellname(i2, j2)
                             ))
         if self.solved():
             logging.debug("Puzzle solved!")
@@ -825,8 +825,7 @@ class Sudoku:
                 if temp_len > 0:
                     color_data[d]['raw_data'][bb] = temp_data
                 if temp_len == 2:
-                    first = temp_data[0]
-                    second = temp_data[1]
+                    first, second = temp_data
                     color_data[d]['occurences'][first]['is_cp'] = True
                     color_data[d]['occurences'][second]['is_cp'] = True
                     color_data[d]['conjugate_pairs'].add(frozenset((first, second)))
@@ -886,6 +885,8 @@ class Sudoku:
                             return
                         while True:
                             self.find_hidden_singles()
+                            if self.solved():
+                                return
                             curr_state = self.save()
                             if curr_state == prev_state:
                                 states.append(curr_state)
