@@ -443,6 +443,9 @@ def test_forced_chains():
     s.fill_blank_cells()
     s.forced_chains()
     assert s.save() == EVIL_B
+    s = Sudoku(EVIL_C)
+    s.forced_chains()
+    assert s.save() == EVIL_D
 
 
 def test_kitchen_sink():
